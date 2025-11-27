@@ -1,0 +1,1564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Warehouse Quality Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        /* LOGIN SCREEN */
+        #loginScreen {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            z-index: 9999;
+        }
+
+        .login-container {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+        }
+
+        .login-logo {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+
+        .login-title {
+            font-size: 2em;
+            color: #333;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .login-subtitle {
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .login-input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+            margin-bottom: 15px;
+            transition: border-color 0.3s;
+        }
+
+        .login-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 15px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .login-btn:hover {
+            background: #5568d3;
+        }
+
+        .error-message {
+            color: #e74c3c;
+            margin-top: 15px;
+            display: none;
+        }
+
+        /* MAIN CONTENT */
+        #mainContent {
+            display: none;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* HEADER */
+        header {
+            background: white;
+            padding: 20px 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .header-left h1 {
+            color: #333;
+            font-size: 2em;
+            margin-bottom: 5px;
+        }
+
+        .header-left p {
+            color: #666;
+        }
+
+        .header-right {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .user-info {
+            color: #333;
+            font-weight: 600;
+        }
+
+        .logout-btn {
+            padding: 10px 20px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .logout-btn:hover {
+            background: #c0392b;
+        }
+
+        /* TABS */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            padding: 15px 30px;
+            background: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            color: #667eea;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+        }
+
+        .tab-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .tab-btn.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* FORM STYLES */
+        .form-container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .form-section {
+            margin-bottom: 30px;
+        }
+
+        .form-section h3 {
+            color: #333;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .required {
+            color: #e74c3c;
+        }
+
+        /* PHOTO UPLOAD */
+        .photo-upload-section {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .photo-upload-btn {
+            padding: 12px 24px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .photo-upload-btn:hover {
+            background: #5568d3;
+        }
+
+        .photo-preview-container {
+            display: flex;
+            gap: 15px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .photo-preview {
+            position: relative;
+            width: 120px;
+            height: 120px;
+        }
+
+        .photo-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+
+        .photo-remove-btn {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        /* SUBMIT BUTTON */
+        .submit-btn {
+            padding: 15px 40px;
+            background: #27ae60;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+
+        .submit-btn:hover {
+            background: #229954;
+        }
+
+        .clear-btn {
+            padding: 15px 40px;
+            background: #95a5a6;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+
+        .clear-btn:hover {
+            background: #7f8c8d;
+        }
+
+        /* DASHBOARD STYLES */
+        .metric-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .metric-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .metric-card h3 {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }
+
+        .metric-card .number {
+            color: #333;
+            font-size: 2.5em;
+            font-weight: bold;
+        }
+
+        .metric-card.critical .number {
+            color: #e74c3c;
+        }
+
+        .metric-card.major .number {
+            color: #f39c12;
+        }
+
+        .metric-card.minor .number {
+            color: #3498db;
+        }
+
+        /* TIME FILTERS */
+        .time-filters {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .time-filter-btn {
+            padding: 10px 20px;
+            background: white;
+            border: 2px solid #667eea;
+            color: #667eea;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .time-filter-btn:hover,
+        .time-filter-btn.active {
+            background: #667eea;
+            color: white;
+        }
+
+        /* CHARTS */
+        .chart-container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .chart-container h3 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        /* STACKED BAR CHART */
+        .stacked-bar-chart {
+            margin-top: 20px;
+        }
+
+        .bar-row {
+            margin-bottom: 25px;
+        }
+
+        .bar-label {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .bar-container {
+            display: flex;
+            height: 40px;
+            background: #f0f0f0;
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .bar-container:hover {
+            transform: scale(1.02);
+        }
+
+        .bar-segment {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.85em;
+            font-weight: 600;
+            transition: opacity 0.2s;
+        }
+
+        .bar-segment:hover {
+            opacity: 0.8;
+        }
+
+        .view-details-btn {
+            padding: 8px 16px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: 600;
+        }
+
+        .view-details-btn:hover {
+            background: #5568d3;
+        }
+
+        /* CLIENT DRILL-DOWN MODAL */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 10000;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .modal-content {
+            background: white;
+            max-width: 900px;
+            margin: 50px auto;
+            border-radius: 15px;
+            padding: 40px;
+            position: relative;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 2em;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #666;
+        }
+
+        .modal-close:hover {
+            color: #333;
+        }
+
+        .modal-header {
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .modal-header h2 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .modal-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .modal-stat {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .modal-stat .label {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+
+        .modal-stat .value {
+            color: #333;
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+
+        .error-type-list {
+            margin-top: 20px;
+        }
+
+        .error-type-item {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .error-type-item h4 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .error-type-bar {
+            height: 30px;
+            background: #667eea;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+
+        .error-type-details {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        /* TABLE STYLES */
+        .data-table-container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        table th {
+            background: #667eea;
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .status-badge {
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        .status-open {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .status-progress {
+            background: #f39c12;
+            color: white;
+        }
+
+        .status-resolved {
+            background: #27ae60;
+            color: white;
+        }
+
+        .severity-critical {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+
+        .severity-major {
+            color: #f39c12;
+            font-weight: bold;
+        }
+
+        .severity-minor {
+            color: #3498db;
+            font-weight: bold;
+        }
+
+        /* LEGEND */
+        .legend {
+            display: flex;
+            gap: 20px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+        }
+
+        /* LOADING SPINNER */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            header {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .tabs {
+                flex-direction: column;
+            }
+
+            .tab-btn {
+                width: 100%;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .metric-cards {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ALERT BOX */
+        .alert {
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .alert.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .alert.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <!-- LOGIN SCREEN -->
+    <div id="loginScreen">
+        <div class="login-container">
+            <div class="login-logo">🔒</div>
+            <h1 class="login-title">Quality Tracker</h1>
+            <p class="login-subtitle">Warehouse Operations</p>
+            <input type="text" id="usernameInput" class="login-input" placeholder="Username" autocomplete="off">
+            <input type="password" id="passwordInput" class="login-input" placeholder="Password" autocomplete="off">
+            <button onclick="login()" class="login-btn">Log In</button>
+            <p class="error-message" id="loginError">❌ Invalid credentials. Please try again.</p>
+        </div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="mainContent">
+        <div class="container">
+            <!-- HEADER -->
+            <header>
+                <div class="header-left">
+                    <h1>⚠️ Warehouse Quality Tracker</h1>
+                    <p>Track, Analyze, and Improve Operations</p>
+                </div>
+                <div class="header-right">
+                    <span class="user-info">👤 <span id="loggedUsername"></span></span>
+                    <button onclick="logout()" class="logout-btn">Logout</button>
+                </div>
+            </header>
+
+            <!-- TABS -->
+            <div class="tabs">
+                <button class="tab-btn active" onclick="switchTab('logError')">📝 Log Error</button>
+                <button class="tab-btn" onclick="switchTab('dashboard')">📊 Dashboard</button>
+                <button class="tab-btn" onclick="switchTab('employeePerf')">👥 Employee Performance</button>
+                <button class="tab-btn" onclick="switchTab('viewEdit')">🔍 View/Edit Records</button>
+            </div>
+
+            <!-- TAB 1: LOG ERROR -->
+            <div id="logError" class="tab-content active">
+                <div class="form-container">
+                    <div class="alert" id="submitAlert"></div>
+                    
+                    <form id="errorForm">
+                        <!-- BASIC INFORMATION -->
+                        <div class="form-section">
+                            <h3>📋 Basic Information</h3>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Date <span class="required">*</span></label>
+                                    <input type="date" id="errorDate" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Time <span class="required">*</span></label>
+                                    <input type="time" id="errorTime" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Client <span class="required">*</span></label>
+                                    <select id="client" required>
+                                        <option value="">Select Client...</option>
+                                        <option value="Bears with Benefits, Inc. (Havea)">Bears with Benefits, Inc. (Havea)</option>
+                                        <option value="Biologique Recherche (BR)">Biologique Recherche (BR)</option>
+                                        <option value="Granado, INC.">Granado, INC.</option>
+                                        <option value="IT Works">IT Works</option>
+                                        <option value="Lampe Berger (Maison)">Lampe Berger (Maison)</option>
+                                        <option value="LimeLife USA LLC">LimeLife USA LLC</option>
+                                        <option value="Maelys Cosmetics">Maelys Cosmetics</option>
+                                        <option value="Natura International, Inc.">Natura International, Inc.</option>
+                                        <option value="Pierre Fabre (PF)">Pierre Fabre (PF)</option>
+                                        <option value="Promix Nutrition TopCo Inc">Promix Nutrition TopCo Inc</option>
+                                        <option value="Radixis Inc (DBA Yves Rocher USA)">Radixis Inc (DBA Yves Rocher USA)</option>
+                                        <option value="Tiffany and Company">Tiffany and Company</option>
+                                        <option value="VB Beauty LLC">VB Beauty LLC</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ERROR CLASSIFICATION -->
+                        <div class="form-section">
+                            <h3>🎯 Error Classification</h3>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Process <span class="required">*</span></label>
+                                    <select id="process" required onchange="updateErrorTypes()">
+                                        <option value="">Select Process...</option>
+                                        <option value="Picking">Picking</option>
+                                        <option value="Packing">Packing</option>
+                                        <option value="Putaway">Putaway</option>
+                                        <option value="Replenishment">Replenishment</option>
+                                        <option value="Receiving">Receiving</option>
+                                        <option value="Shipping">Shipping</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Error Type <span class="required">*</span></label>
+                                    <select id="errorType" required>
+                                        <option value="">Select Process First...</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Severity <span class="required">*</span></label>
+                                    <select id="severity" required>
+                                        <option value="">Select Severity...</option>
+                                        <option value="Critical">Critical (Customer Impact/Safety)</option>
+                                        <option value="Major">Major (Financial Impact)</option>
+                                        <option value="Minor">Minor (Internal Only)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Order Number / Reference</label>
+                                    <input type="text" id="orderNumber" placeholder="Order #">
+                                </div>
+                                <div class="form-group">
+                                    <label>SKU</label>
+                                    <input type="text" id="sku" placeholder="SKU">
+                                </div>
+                                <div class="form-group">
+                                    <label>Location (Zone/Aisle/Bin)</label>
+                                    <input type="text" id="location" placeholder="e.g., A-12-03">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- EMPLOYEE INFORMATION -->
+                        <div class="form-section">
+                            <h3>👤 Employee Information</h3>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Employee Name</label>
+                                    <input type="text" id="employeeName" placeholder="Type employee name (optional)">
+                                </div>
+                                <div class="form-group">
+                                    <label>Root Cause <span class="required">*</span></label>
+                                    <select id="rootCause" required>
+                                        <option value="">Select Root Cause...</option>
+                                        <option value="Human Error">Human Error</option>
+                                        <option value="System Error">System Error</option>
+                                        <option value="Training Gap">Training Gap</option>
+                                        <option value="Process Issue">Process Issue</option>
+                                        <option value="Equipment Failure">Equipment Failure</option>
+                                        <option value="Communication Breakdown">Communication Breakdown</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- DESCRIPTION & ACTIONS -->
+                        <div class="form-section">
+                            <h3>📝 Description & Actions</h3>
+                            <div class="form-group">
+                                <label>Description (What Happened?) <span class="required">*</span></label>
+                                <textarea id="description" required placeholder="Describe the error in detail..."></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label>Corrective Action (What Was Done?)</label>
+                                <textarea id="correctiveAction" placeholder="Describe the immediate fix..."></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label>Preventive Action (How to Prevent?)</label>
+                                <textarea id="preventiveAction" placeholder="Describe steps to prevent recurrence..."></textarea>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Status <span class="required">*</span></label>
+                                    <select id="status" required>
+                                        <option value="Open">Open</option>
+                                        <option value="In Progress">In Progress</option>
+                                        <option value="Resolved">Resolved</option>
+                                        <option value="Closed">Closed</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- PHOTO UPLOAD -->
+                        <div class="form-section">
+                            <h3>📸 Attach Photos (Optional)</h3>
+                            <div class="photo-upload-section">
+                                <input type="file" id="photoInput" multiple accept="image/*" style="display:none;" onchange="handlePhotoUpload()">
+                                <button type="button" class="photo-upload-btn" onclick="document.getElementById('photoInput').click()">
+                                    📷 Add Photos (Up to 5)
+                                </button>
+                                <div id="photoPreviewContainer" class="photo-preview-container"></div>
+                            </div>
+                        </div>
+
+                        <!-- DISCIPLINARY ACTION (Auto-populated) -->
+                        <div class="form-section">
+                            <h3>⚖️ Disciplinary Action (Auto-Suggested)</h3>
+                            <div id="disciplinarySection" style="display:none;">
+                                <div class="alert" style="display:block; background:#fff3cd; color:#856404; border:1px solid #ffeaa7;">
+                                    <strong>📊 Employee History:</strong>
+                                    <p id="employeeHistory">Loading...</p>
+                                    <p><strong>🤖 Suggested Action:</strong> <span id="suggestedAction">None</span></p>
+                                </div>
+                                <div class="form-row" style="margin-top:20px;">
+                                    <div class="form-group">
+                                        <label>Action Taken</label>
+                                        <select id="actionTaken">
+                                            <option value="">No Action Required</option>
+                                            <option value="Verbal Coaching">Verbal Coaching</option>
+                                            <option value="Retraining Required">Retraining Required</option>
+                                            <option value="Written Warning Issued">Written Warning Issued</option>
+                                            <option value="Suspension Issued">Suspension Issued</option>
+                                            <option value="Under Investigation">Under Investigation</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Manager/Supervisor Name</label>
+                                        <input type="text" id="managerName" placeholder="Your name">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label>Action Notes</label>
+                                    <textarea id="actionNotes" placeholder="Document the disciplinary action taken..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- SUBMIT BUTTONS -->
+                        <div style="text-align: center;">
+                            <button type="submit" class="submit-btn">✅ Submit Error Report</button>
+                            <button type="button" class="clear-btn" onclick="clearForm()">🔄 Clear Form</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- TAB 2: DASHBOARD -->
+            <div id="dashboard" class="tab-content">
+                <div class="time-filters">
+                    <button class="time-filter-btn active" onclick="filterByTime('today')">📅 Today</button>
+                    <button class="time-filter-btn" onclick="filterByTime('week')">📅 This Week</button>
+                    <button class="time-filter-btn" onclick="filterByTime('month')">📅 This Month</button>
+                    <button class="time-filter-btn" onclick="filterByTime('year')">📅 This Year</button>
+                </div>
+
+                <!-- METRIC CARDS -->
+                <div class="metric-cards">
+                    <div class="metric-card">
+                        <h3>Total Errors</h3>
+                        <div class="number" id="totalErrors">0</div>
+                    </div>
+                    <div class="metric-card critical">
+                        <h3>Critical</h3>
+                        <div class="number" id="criticalErrors">0</div>
+                    </div>
+                    <div class="metric-card major">
+                        <h3>Major</h3>
+                        <div class="number" id="majorErrors">0</div>
+                    </div>
+                    <div class="metric-card minor">
+                        <h3>Minor</h3>
+                        <div class="number" id="minorErrors">0</div>
+                    </div>
+                    <div class="metric-card">
+                        <h3>Open Issues</h3>
+                        <div class="number" id="openIssues">0</div>
+                    </div>
+                </div>
+
+                <!-- CLIENT ERRORS - CURRENT MONTH -->
+                <div class="chart-container">
+                    <h3>📊 Errors by Client - Current Month</h3>
+                    <div id="clientErrorsChart">
+                        <div class="loading">Loading client data...</div>
+                    </div>
+                </div>
+
+                <!-- ERROR TYPES BY CLIENT - STACKED BAR -->
+                <div class="chart-container">
+                    <h3>📊 Error Types by Client - Current Month</h3>
+                    <div id="errorTypesByClient" class="stacked-bar-chart">
+                        <div class="loading">Loading error type data...</div>
+                    </div>
+                    <div class="legend" id="errorTypeLegend"></div>
+                </div>
+
+                <!-- OTHER CHARTS -->
+                <div class="chart-container">
+                    <h3>📊 Errors by Process</h3>
+                    <div id="procesChart">
+                        <div class="loading">Loading process data...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 3: EMPLOYEE PERFORMANCE -->
+            <div id="employeePerf" class="tab-content">
+                <div class="data-table-container">
+                    <h3 style="margin-bottom:20px;">👥 Employee Performance Tracking</h3>
+                    <div id="employeeTable">
+                        <div class="loading">Loading employee data...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 4: VIEW/EDIT RECORDS -->
+            <div id="viewEdit" class="tab-content">
+                <div class="data-table-container">
+                    <h3 style="margin-bottom:20px;">🔍 All Error Records</h3>
+                    <div id="recordsTable">
+                        <div class="loading">Loading records...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CLIENT DRILL-DOWN MODAL -->
+    <div id="clientModal" class="modal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeClientModal()">×</button>
+            <div class="modal-header">
+                <h2 id="modalClientName">Client Name</h2>
+                <p id="modalClientSubtitle">Error Analysis</p>
+            </div>
+            <div class="modal-stats">
+                <div class="modal-stat">
+                    <div class="label">Total Errors</div>
+                    <div class="value" id="modalTotalErrors">0</div>
+                </div>
+                <div class="modal-stat">
+                    <div class="label">Error Rate</div>
+                    <div class="value" id="modalErrorRate">0%</div>
+                </div>
+                <div class="modal-stat">
+                    <div class="label">Trend</div>
+                    <div class="value" id="modalTrend">--</div>
+                </div>
+                <div class="modal-stat">
+                    <div class="label">Risk Level</div>
+                    <div class="value" id="modalRiskLevel">--</div>
+                </div>
+            </div>
+            <div class="error-type-list" id="modalErrorTypeList">
+                <!-- Error types will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ERROR TYPE MAPPINGS
+        const errorTypesByProcess = {
+            'Picking': [
+                'Wrong Item Picked',
+                'Wrong Quantity',
+                'Damaged Item Selected',
+                'Missed Pick',
+                'Wrong Location Picked From'
+            ],
+            'Packing': [
+                'Wrong Packing Materials',
+                'Mislabeled Shipment',
+                'Damaged During Packing',
+                'Missing Item in Box',
+                'Wrong Box Size'
+            ],
+            'Putaway': [
+                'Wrong Location',
+                'Wrong Bin',
+                'Not Scanned',
+                'Damaged During Putaway',
+                'Incorrect Orientation'
+            ],
+            'Replenishment': [
+                'Wrong Item Replenished',
+                'Wrong Quantity',
+                'Late Replenishment',
+                'Wrong Location',
+                'Not Updated in System'
+            ],
+            'Receiving': [
+                'Quantity Discrepancy',
+                'Damaged Goods Accepted',
+                'Wrong SKU Received',
+                'Not Labeled Correctly',
+                'Missing Documentation'
+            ],
+            'Shipping': [
+                'Wrong Carrier',
+                'Wrong Shipping Address',
+                'Missing BOL',
+                'Damaged During Loading',
+                'Late Shipment',
+                'Wrong Trailer/Dock',
+                'Missing Shipping Documents'
+            ]
+        };
+
+        // SAMPLE DATA (In production, this would come from Google Sheets)
+        let errorData = [];
+        let currentUser = '';
+        let uploadedPhotos = [];
+
+        // LOGIN FUNCTION
+        function login() {
+            const username = document.getElementById('usernameInput').value;
+            const password = document.getElementById('passwordInput').value;
+            
+            // Simple authentication (In production, verify against Google Sheets)
+            if (username === 'roberto' && password === 'Stacia2024!') {
+                currentUser = username;
+                sessionStorage.setItem('loggedIn', 'true');
+                sessionStorage.setItem('username', username);
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('mainContent').style.display = 'block';
+                document.getElementById('loggedUsername').textContent = username;
+                
+                // Set current date and time
+                const now = new Date();
+                document.getElementById('errorDate').valueAsDate = now;
+                document.getElementById('errorTime').value = now.toTimeString().slice(0,5);
+                
+                loadDashboardData();
+            } else {
+                document.getElementById('loginError').style.display = 'block';
+                document.getElementById('passwordInput').value = '';
+            }
+        }
+
+        // LOGOUT FUNCTION
+        function logout() {
+            sessionStorage.clear();
+            location.reload();
+        }
+
+        // CHECK LOGIN ON PAGE LOAD
+        window.onload = function() {
+            if (sessionStorage.getItem('loggedIn') === 'true') {
+                currentUser = sessionStorage.getItem('username');
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('mainContent').style.display = 'block';
+                document.getElementById('loggedUsername').textContent = currentUser;
+                
+                const now = new Date();
+                document.getElementById('errorDate').valueAsDate = now;
+                document.getElementById('errorTime').value = now.toTimeString().slice(0,5);
+                
+                loadDashboardData();
+            }
+
+            // Allow Enter key on login
+            document.getElementById('passwordInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') login();
+            });
+        };
+
+        // TAB SWITCHING
+        function switchTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Show selected tab
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+            
+            // Load data for specific tabs
+            if (tabName === 'dashboard') {
+                loadDashboardData();
+            } else if (tabName === 'employeePerf') {
+                loadEmployeePerformance();
+            } else if (tabName === 'viewEdit') {
+                loadAllRecords();
+            }
+        }
+
+        // UPDATE ERROR TYPES BASED ON PROCESS
+        function updateErrorTypes() {
+            const process = document.getElementById('process').value;
+            const errorTypeSelect = document.getElementById('errorType');
+            
+            errorTypeSelect.innerHTML = '<option value="">Select Error Type...</option>';
+            
+            if (process && errorTypesByProcess[process]) {
+                errorTypesByProcess[process].forEach(type => {
+                    const option = document.createElement('option');
+                    option.value = type;
+                    option.textContent = type;
+                    errorTypeSelect.appendChild(option);
+                });
+            }
+        }
+
+        // PHOTO UPLOAD HANDLING
+        function handlePhotoUpload() {
+            const files = document.getElementById('photoInput').files;
+            const container = document.getElementById('photoPreviewContainer');
+            
+            // Limit to 5 photos
+            if (uploadedPhotos.length + files.length > 5) {
+                alert('Maximum 5 photos allowed');
+                return;
+            }
+            
+            Array.from(files).forEach((file, index) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    uploadedPhotos.push(e.target.result);
+                    
+                    const preview = document.createElement('div');
+                    preview.className = 'photo-preview';
+                    preview.innerHTML = `
+                        <img src="${e.target.result}" alt="Photo ${uploadedPhotos.length}">
+                        <button type="button" class="photo-remove-btn" onclick="removePhoto(${uploadedPhotos.length - 1})">×</button>
+                    `;
+                    container.appendChild(preview);
+                };
+                reader.readAsDataURL(file);
+            });
+            
+            // Clear file input
+            document.getElementById('photoInput').value = '';
+        }
+
+        function removePhoto(index) {
+            uploadedPhotos.splice(index, 1);
+            const container = document.getElementById('photoPreviewContainer');
+            container.innerHTML = '';
+            
+            uploadedPhotos.forEach((photo, i) => {
+                const preview = document.createElement('div');
+                preview.className = 'photo-preview';
+                preview.innerHTML = `
+                    <img src="${photo}" alt="Photo ${i + 1}">
+                    <button type="button" class="photo-remove-btn" onclick="removePhoto(${i})">×</button>
+                `;
+                container.appendChild(preview);
+            });
+        }
+
+        // FORM SUBMISSION
+        document.getElementById('errorForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const errorRecord = {
+                id: 'ERR-' + Date.now(),
+                date: document.getElementById('errorDate').value,
+                time: document.getElementById('errorTime').value,
+                loggedBy: currentUser,
+                client: document.getElementById('client').value,
+                process: document.getElementById('process').value,
+                errorType: document.getElementById('errorType').value,
+                severity: document.getElementById('severity').value,
+                orderNumber: document.getElementById('orderNumber').value,
+                sku: document.getElementById('sku').value,
+                location: document.getElementById('location').value,
+                employeeName: document.getElementById('employeeName').value,
+                rootCause: document.getElementById('rootCause').value,
+                description: document.getElementById('description').value,
+                correctiveAction: document.getElementById('correctiveAction').value,
+                preventiveAction: document.getElementById('preventiveAction').value,
+                status: document.getElementById('status').value,
+                photos: uploadedPhotos.slice(),
+                actionTaken: document.getElementById('actionTaken').value,
+                managerName: document.getElementById('managerName').value,
+                actionNotes: document.getElementById('actionNotes').value
+            };
+            
+            // In production: Save to Google Sheets via Apps Script
+            errorData.push(errorRecord);
+            
+            // Show success message
+            const alert = document.getElementById('submitAlert');
+            alert.className = 'alert success show';
+            alert.textContent = '✅ Error report submitted successfully! ID: ' + errorRecord.id;
+            
+            // Clear form
+            setTimeout(() => {
+                clearForm();
+                alert.classList.remove('show');
+            }, 3000);
+            
+            console.log('Error Record:', errorRecord);
+        });
+
+        function clearForm() {
+            document.getElementById('errorForm').reset();
+            uploadedPhotos = [];
+            document.getElementById('photoPreviewContainer').innerHTML = '';
+            
+            const now = new Date();
+            document.getElementById('errorDate').valueAsDate = now;
+            document.getElementById('errorTime').value = now.toTimeString().slice(0,5);
+        }
+
+        // LOAD DASHBOARD DATA
+        function loadDashboardData() {
+            // In production: Fetch from Google Sheets
+            // For now, display sample data
+            
+            // Sample metrics
+            document.getElementById('totalErrors').textContent = '47';
+            document.getElementById('criticalErrors').textContent = '5';
+            document.getElementById('majorErrors').textContent = '18';
+            document.getElementById('minorErrors').textContent = '24';
+            document.getElementById('openIssues').textContent = '12';
+            
+            // Load client errors chart
+            loadClientErrorsChart();
+            loadErrorTypesByClient();
+        }
+
+        function loadClientErrorsChart() {
+            const sampleClientData = [
+                { client: 'Pierre Fabre (PF)', errors: 15 },
+                { client: 'Yves Rocher', errors: 12 },
+                { client: 'Natura International', errors: 8 },
+                { client: 'Granado, INC.', errors: 6 },
+                { client: 'Maelys Cosmetics', errors: 4 },
+                { client: 'Biologique Recherche', errors: 2 }
+            ];
+            
+            const container = document.getElementById('clientErrorsChart');
+            container.innerHTML = '';
+            
+            sampleClientData.forEach(data => {
+                const barRow = document.createElement('div');
+                barRow.className = 'bar-row';
+                const percentage = (data.errors / 47 * 100).toFixed(0);
+                
+                barRow.innerHTML = `
+                    <div class="bar-label">
+                        <span>${data.client}</span>
+                        <span>${data.errors} errors (${percentage}%)</span>
+                    </div>
+                    <div class="bar-container" style="background: linear-gradient(90deg, #667eea ${percentage}%, #f0f0f0 ${percentage}%);">
+                    </div>
+                `;
+                container.appendChild(barRow);
+            });
+        }
+
+        function loadErrorTypesByClient() {
+            const sampleData = [
+                { 
+                    client: 'Pierre Fabre (PF)', 
+                    total: 15,
+                    types: { 'Mislabeled': 5, 'Wrong Item': 3, 'Wrong Qty': 3, 'Damaged': 2, 'Wrong Loc': 2 }
+                },
+                { 
+                    client: 'Yves Rocher', 
+                    total: 12,
+                    types: { 'Wrong Qty': 4, 'Mislabeled': 3, 'Not Scanned': 3, 'Damaged': 2 }
+                },
+                { 
+                    client: 'Natura International', 
+                    total: 8,
+                    types: { 'Wrong Item': 3, 'Wrong Loc': 3, 'Damaged': 2 }
+                },
+                { 
+                    client: 'Granado, INC.', 
+                    total: 6,
+                    types: { 'Damaged': 2, 'Wrong Item': 2, 'Late Repl': 2 }
+                }
+            ];
+            
+            const colors = {
+                'Wrong Item': '#e74c3c',
+                'Mislabeled': '#e67e22',
+                'Wrong Qty': '#f39c12',
+                'Damaged': '#9b59b6',
+                'Wrong Loc': '#3498db',
+                'Not Scanned': '#1abc9c',
+                'Late Repl': '#34495e'
+            };
+            
+            const container = document.getElementById('errorTypesByClient');
+            container.innerHTML = '';
+            
+            sampleData.forEach(data => {
+                const barRow = document.createElement('div');
+                barRow.className = 'bar-row';
+                
+                let barHTML = '';
+                Object.entries(data.types).forEach(([type, count]) => {
+                    const width = (count / data.total * 100);
+                    barHTML += `<div class="bar-segment" style="width:${width}%; background:${colors[type] || '#95a5a6'};" title="${type}: ${count}">${count > 0 ? type.substring(0,4) : ''}</div>`;
+                });
+                
+                barRow.innerHTML = `
+                    <div class="bar-label">
+                        <span>${data.client}</span>
+                        <button class="view-details-btn" onclick="showClientModal('${data.client}')">📋 View Details</button>
+                    </div>
+                    <div class="bar-container">
+                        ${barHTML}
+                    </div>
+                `;
+                container.appendChild(barRow);
+            });
+            
+            // Create legend
+            const legend = document.getElementById('errorTypeLegend');
+            legend.innerHTML = '<strong>Legend:</strong>';
+            Object.entries(colors).forEach(([type, color]) => {
+                const item = document.createElement('div');
+                item.className = 'legend-item';
+                item.innerHTML = `
+                    <div class="legend-color" style="background:${color};"></div>
+                    <span>${type}</span>
+                `;
+                legend.appendChild(item);
+            });
+        }
+
+        function showClientModal(clientName) {
+            // In production: Fetch detailed client data from Google Sheets
+            document.getElementById('modalClientName').textContent = clientName;
+            document.getElementById('modalClientSubtitle').textContent = 'Error Analysis - November 2024';
+            
+            // Sample data
+            document.getElementById('modalTotalErrors').textContent = '15';
+            document.getElementById('modalErrorRate').textContent = '0.8%';
+            document.getElementById('modalTrend').textContent = '↑ 40%';
+            document.getElementById('modalRiskLevel').innerHTML = '<span style="color:#e74c3c;">🔴 HIGH</span>';
+            
+            const errorTypes = [
+                { type: 'Mislabeled Shipment', count: 5, percentage: 33, process: 'Packing (4), Shipping (1)' },
+                { type: 'Wrong Item Picked', count: 3, percentage: 20, process: 'Picking (3)' },
+                { type: 'Wrong Quantity', count: 3, percentage: 20, process: 'Picking (2), Packing (1)' },
+                { type: 'Wrong Location', count: 2, percentage: 13, process: 'Putaway (2)' },
+                { type: 'Damaged Item', count: 2, percentage: 13, process: 'Packing (1), Shipping (1)' }
+            ];
+            
+            const listContainer = document.getElementById('modalErrorTypeList');
+            listContainer.innerHTML = '<h3 style="margin-bottom:20px;">📋 Error Type Breakdown:</h3>';
+            
+            errorTypes.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'error-type-item';
+                div.innerHTML = `
+                    <h4>${item.type} - ${item.count} (${item.percentage}%)</h4>
+                    <div class="error-type-bar" style="width:${item.percentage}%;"></div>
+                    <div class="error-type-details">
+                        <p>Process: ${item.process}</p>
+                        <p>🎯 Action: Review and implement corrective training</p>
+                    </div>
+                `;
+                listContainer.appendChild(div);
+            });
+            
+            document.getElementById('clientModal').style.display = 'block';
+        }
+
+        function closeClientModal() {
+            document.getElementById('clientModal').style.display = 'none';
+        }
+
+        function loadEmployeePerformance() {
+            // Sample employee data
+            const employeeData = [
+                { name: 'John Smith', total: 8, minor: 5, major: 2, critical: 1, status: '🔴 High Risk' },
+                { name: 'Maria Garcia', total: 4, minor: 4, major: 0, critical: 0, status: '🟡 Watch List' },
+                { name: 'David Lee', total: 2, minor: 2, major: 0, critical: 0, status: '🟢 Good' }
+            ];
+            
+            let html = '<table><thead><tr><th>Employee</th><th>Total Errors</th><th>Minor</th><th>Major</th><th>Critical</th><th>Status</th></tr></thead><tbody>';
+            
+            employeeData.forEach(emp => {
+                html += `<tr>
+                    <td>${emp.name}</td>
+                    <td>${emp.total}</td>
+                    <td>${emp.minor}</td>
+                    <td>${emp.major}</td>
+                    <td>${emp.critical}</td>
+                    <td>${emp.status}</td>
+                </tr>`;
+            });
+            
+            html += '</tbody></table>';
+            document.getElementById('employeeTable').innerHTML = html;
+        }
+
+        function loadAllRecords() {
+            // Sample records
+            let html = '<table><thead><tr><th>Error ID</th><th>Date</th><th>Client</th><th>Process</th><th>Error Type</th><th>Severity</th><th>Status</th></tr></thead><tbody>';
+            
+            if (errorData.length === 0) {
+                html += '<tr><td colspan="7" style="text-align:center;">No records yet. Start by logging an error.</td></tr>';
+            } else {
+                errorData.forEach(record => {
+                    html += `<tr>
+                        <td>${record.id}</td>
+                        <td>${record.date}</td>
+                        <td>${record.client}</td>
+                        <td>${record.process}</td>
+                        <td>${record.errorType}</td>
+                        <td class="severity-${record.severity.toLowerCase()}">${record.severity}</td>
+                        <td><span class="status-badge status-${record.status.toLowerCase().replace(' ', '')}">${record.status}</span></td>
+                    </tr>`;
+                });
+            }
+            
+            html += '</tbody></table>';
+            document.getElementById('recordsTable').innerHTML = html;
+        }
+
+        function filterByTime(period) {
+            // Remove active class from all buttons
+            document.querySelectorAll('.time-filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            // Add active to clicked button
+            event.target.classList.add('active');
+            
+            // In production: Filter data based on period
+            console.log('Filtering by:', period);
+            loadDashboardData();
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('clientModal');
+            if (event.target == modal) {
+                closeClientModal();
+            }
+        }
+    </script>
+</body>
+</html>
