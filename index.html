@@ -1078,6 +1078,14 @@
     </div>
 
     <script>
+        // ==========================================
+        // CONFIGURATION - GOOGLE SHEETS BACKEND
+        // ==========================================
+        const CONFIG = {
+            WEBAPP_URL: 'https://script.google.com/macros/s/AKfycbwRrEwAN6KS8zejlR2ZSW1v0TzqqfIbNFXuAYTLr51asam6JDCoFPFgDVfCb7xD17oo/exec',
+            DEBUG_MODE: true // Set to false in production
+        };
+
         // ERROR TYPE MAPPINGS
         const errorTypesByProcess = {
             'Picking': [
@@ -1132,28 +1140,57 @@
         let uploadedPhotos = [];
 
         // LOGIN FUNCTION
-        function login() {
+        async function login() {
             const username = document.getElementById('usernameInput').value;
             const password = document.getElementById('passwordInput').value;
+            const errorMsg = document.getElementById('loginError');
             
-            // Simple authentication (In production, verify against Google Sheets)
-            if (username === 'roberto' && password === 'Stacia2024!') {
-                currentUser = username;
-                sessionStorage.setItem('loggedIn', 'true');
-                sessionStorage.setItem('username', username);
-                document.getElementById('loginScreen').style.display = 'none';
-                document.getElementById('mainContent').style.display = 'block';
-                document.getElementById('loggedUsername').textContent = username;
+            // Show loading
+            errorMsg.textContent = 'Authenticating...';
+            errorMsg.style.display = 'block';
+            errorMsg.style.color = '#3498db';
+            
+            try {
+                // Authenticate with Google Sheets
+                const response = await fetch(CONFIG.WEBAPP_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `action=authenticate&username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`
+                });
                 
-                // Set current date and time
-                const now = new Date();
-                document.getElementById('errorDate').valueAsDate = now;
-                document.getElementById('errorTime').value = now.toTimeString().slice(0,5);
+                const result = await response.json();
                 
-                loadDashboardData();
-            } else {
-                document.getElementById('loginError').style.display = 'block';
-                document.getElementById('passwordInput').value = '';
+                if (CONFIG.DEBUG_MODE) {
+                    console.log('Login response:', result);
+                }
+                
+                if (result.success) {
+                    // Login successful
+                    currentUser = username;
+                    sessionStorage.setItem('loggedIn', 'true');
+                    sessionStorage.setItem('username', username);
+                    document.getElementById('loginScreen').style.display = 'none';
+                    document.getElementById('mainContent').style.display = 'block';
+                    document.getElementById('loggedUsername').textContent = username;
+                    
+                    // Set current date and time
+                    const now = new Date();
+                    document.getElementById('errorDate').valueAsDate = now;
+                    document.getElementById('errorTime').value = now.toTimeString().slice(0,5);
+                    
+                    loadDashboardData();
+                } else {
+                    // Login failed
+                    errorMsg.textContent = '❌ Invalid credentials. Please try again.';
+                    errorMsg.style.color = '#e74c3c';
+                    document.getElementById('passwordInput').value = '';
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                errorMsg.textContent = '❌ Connection error. Please check your setup.';
+                errorMsg.style.color = '#e74c3c';
             }
         }
 
@@ -1273,11 +1310,16 @@
         }
 
         // FORM SUBMISSION
-        document.getElementById('errorForm').addEventListener('submit', function(e) {
+        document.getElementById('errorForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
+            const alert = document.getElementById('submitAlert');
+            alert.textContent = '⏳ Submitting...';
+            alert.className = 'alert show';
+            alert.style.background = '#d1ecf1';
+            alert.style.color = '#0c5460';
+            
             const errorRecord = {
-                id: 'ERR-' + Date.now(),
                 date: document.getElementById('errorDate').value,
                 time: document.getElementById('errorTime').value,
                 loggedBy: currentUser,
@@ -1294,27 +1336,55 @@
                 correctiveAction: document.getElementById('correctiveAction').value,
                 preventiveAction: document.getElementById('preventiveAction').value,
                 status: document.getElementById('status').value,
-                photos: uploadedPhotos.slice(),
+                photoUrls: uploadedPhotos.join(','), // Convert photos to comma-separated URLs
                 actionTaken: document.getElementById('actionTaken').value,
                 managerName: document.getElementById('managerName').value,
                 actionNotes: document.getElementById('actionNotes').value
             };
             
-            // In production: Save to Google Sheets via Apps Script
-            errorData.push(errorRecord);
-            
-            // Show success message
-            const alert = document.getElementById('submitAlert');
-            alert.className = 'alert success show';
-            alert.textContent = '✅ Error report submitted successfully! ID: ' + errorRecord.id;
-            
-            // Clear form
-            setTimeout(() => {
-                clearForm();
-                alert.classList.remove('show');
-            }, 3000);
-            
-            console.log('Error Record:', errorRecord);
+            try {
+                // Save to Google Sheets
+                const response = await fetch(CONFIG.WEBAPP_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: 'action=submitError&data=' + encodeURIComponent(JSON.stringify(errorRecord))
+                });
+                
+                const result = await response.json();
+                
+                if (CONFIG.DEBUG_MODE) {
+                    console.log('Submit response:', result);
+                }
+                
+                if (result.success) {
+                    // Success!
+                    alert.className = 'alert success show';
+                    alert.textContent = '✅ Error report submitted successfully! ID: ' + result.errorId;
+                    
+                    // Add to local array
+                    errorData.push({...errorRecord, id: result.errorId});
+                    
+                    // Clear form after 3 seconds
+                    setTimeout(() => {
+                        clearForm();
+                        alert.classList.remove('show');
+                    }, 3000);
+                } else {
+                    // Error
+                    alert.className = 'alert error show';
+                    alert.textContent = '❌ Error: ' + (result.error || 'Failed to submit');
+                    
+                    if (CONFIG.DEBUG_MODE) {
+                        console.error('Submission error:', result);
+                    }
+                }
+            } catch (error) {
+                console.error('Network error:', error);
+                alert.className = 'alert error show';
+                alert.textContent = '❌ Connection error. Please check your internet and try again.';
+            }
         });
 
         function clearForm() {
@@ -1328,123 +1398,175 @@
         }
 
         // LOAD DASHBOARD DATA
-        function loadDashboardData() {
-            // In production: Fetch from Google Sheets
-            // For now, display sample data
-            
-            // Sample metrics
-            document.getElementById('totalErrors').textContent = '47';
-            document.getElementById('criticalErrors').textContent = '5';
-            document.getElementById('majorErrors').textContent = '18';
-            document.getElementById('minorErrors').textContent = '24';
-            document.getElementById('openIssues').textContent = '12';
-            
-            // Load client errors chart
-            loadClientErrorsChart();
-            loadErrorTypesByClient();
-        }
-
-        function loadClientErrorsChart() {
-            const sampleClientData = [
-                { client: 'Pierre Fabre (PF)', errors: 15 },
-                { client: 'Yves Rocher', errors: 12 },
-                { client: 'Natura International', errors: 8 },
-                { client: 'Granado, INC.', errors: 6 },
-                { client: 'Maelys Cosmetics', errors: 4 },
-                { client: 'Biologique Recherche', errors: 2 }
-            ];
-            
-            const container = document.getElementById('clientErrorsChart');
-            container.innerHTML = '';
-            
-            sampleClientData.forEach(data => {
-                const barRow = document.createElement('div');
-                barRow.className = 'bar-row';
-                const percentage = (data.errors / 47 * 100).toFixed(0);
-                
-                barRow.innerHTML = `
-                    <div class="bar-label">
-                        <span>${data.client}</span>
-                        <span>${data.errors} errors (${percentage}%)</span>
-                    </div>
-                    <div class="bar-container" style="background: linear-gradient(90deg, #667eea ${percentage}%, #f0f0f0 ${percentage}%);">
-                    </div>
-                `;
-                container.appendChild(barRow);
-            });
-        }
-
-        function loadErrorTypesByClient() {
-            const sampleData = [
-                { 
-                    client: 'Pierre Fabre (PF)', 
-                    total: 15,
-                    types: { 'Mislabeled': 5, 'Wrong Item': 3, 'Wrong Qty': 3, 'Damaged': 2, 'Wrong Loc': 2 }
-                },
-                { 
-                    client: 'Yves Rocher', 
-                    total: 12,
-                    types: { 'Wrong Qty': 4, 'Mislabeled': 3, 'Not Scanned': 3, 'Damaged': 2 }
-                },
-                { 
-                    client: 'Natura International', 
-                    total: 8,
-                    types: { 'Wrong Item': 3, 'Wrong Loc': 3, 'Damaged': 2 }
-                },
-                { 
-                    client: 'Granado, INC.', 
-                    total: 6,
-                    types: { 'Damaged': 2, 'Wrong Item': 2, 'Late Repl': 2 }
-                }
-            ];
-            
-            const colors = {
-                'Wrong Item': '#e74c3c',
-                'Mislabeled': '#e67e22',
-                'Wrong Qty': '#f39c12',
-                'Damaged': '#9b59b6',
-                'Wrong Loc': '#3498db',
-                'Not Scanned': '#1abc9c',
-                'Late Repl': '#34495e'
-            };
-            
-            const container = document.getElementById('errorTypesByClient');
-            container.innerHTML = '';
-            
-            sampleData.forEach(data => {
-                const barRow = document.createElement('div');
-                barRow.className = 'bar-row';
-                
-                let barHTML = '';
-                Object.entries(data.types).forEach(([type, count]) => {
-                    const width = (count / data.total * 100);
-                    barHTML += `<div class="bar-segment" style="width:${width}%; background:${colors[type] || '#95a5a6'};" title="${type}: ${count}">${count > 0 ? type.substring(0,4) : ''}</div>`;
+        async function loadDashboardData() {
+            try {
+                // Get metrics from Google Sheets
+                const response = await fetch(CONFIG.WEBAPP_URL + '?action=getDashboardMetrics&timeFilter=month', {
+                    method: 'POST'
                 });
+                const result = await response.json();
                 
-                barRow.innerHTML = `
-                    <div class="bar-label">
-                        <span>${data.client}</span>
-                        <button class="view-details-btn" onclick="showClientModal('${data.client}')">📋 View Details</button>
-                    </div>
-                    <div class="bar-container">
-                        ${barHTML}
-                    </div>
-                `;
-                container.appendChild(barRow);
-            });
-            
-            // Create legend
-            const legend = document.getElementById('errorTypeLegend');
-            legend.innerHTML = '<strong>Legend:</strong>';
-            Object.entries(colors).forEach(([type, color]) => {
-                const item = document.createElement('div');
-                item.className = 'legend-item';
-                item.innerHTML = `
-                    <div class="legend-color" style="background:${color};"></div>
-                    <span>${type}</span>
-                `;
-                legend.appendChild(item);
-            });
+                if (CONFIG.DEBUG_MODE) {
+                    console.log('Dashboard metrics:', result);
+                }
+                
+                if (result.success) {
+                    document.getElementById('totalErrors').textContent = result.metrics.total;
+                    document.getElementById('criticalErrors').textContent = result.metrics.critical;
+                    document.getElementById('majorErrors').textContent = result.metrics.major;
+                    document.getElementById('minorErrors').textContent = result.metrics.minor;
+                    document.getElementById('openIssues').textContent = result.metrics.open;
+                } else {
+                    // Show sample data if no data yet
+                    document.getElementById('totalErrors').textContent = '0';
+                    document.getElementById('criticalErrors').textContent = '0';
+                    document.getElementById('majorErrors').textContent = '0';
+                    document.getElementById('minorErrors').textContent = '0';
+                    document.getElementById('openIssues').textContent = '0';
+                }
+                
+                // Load charts
+                await loadClientErrorsChart();
+                await loadErrorTypesByClient();
+            } catch (error) {
+                console.error('Error loading dashboard:', error);
+                // Show zeros if connection fails
+                document.getElementById('totalErrors').textContent = '0';
+                document.getElementById('criticalErrors').textContent = '0';
+                document.getElementById('majorErrors').textContent = '0';
+                document.getElementById('minorErrors').textContent = '0';
+                document.getElementById('openIssues').textContent = '0';
+            }
+        }
+
+        async function loadClientErrorsChart() {
+            try {
+                const response = await fetch(CONFIG.WEBAPP_URL + '?action=getErrorsByClient', {
+                    method: 'POST'
+                });
+                const result = await response.json();
+                
+                const container = document.getElementById('clientErrorsChart');
+                
+                if (result.success && Object.keys(result.data).length > 0) {
+                    container.innerHTML = '';
+                    
+                    // Convert to array and sort
+                    const sortedData = Object.entries(result.data)
+                        .map(([client, count]) => ({ client, errors: count }))
+                        .sort((a, b) => b.errors - a.errors);
+                    
+                    const total = sortedData.reduce((sum, item) => sum + item.errors, 0);
+                    
+                    sortedData.forEach(data => {
+                        const barRow = document.createElement('div');
+                        barRow.className = 'bar-row';
+                        const percentage = (data.errors / total * 100).toFixed(0);
+                        
+                        barRow.innerHTML = `
+                            <div class="bar-label">
+                                <span>${data.client}</span>
+                                <span>${data.errors} errors (${percentage}%)</span>
+                            </div>
+                            <div class="bar-container" style="background: linear-gradient(90deg, #667eea ${percentage}%, #f0f0f0 ${percentage}%);">
+                            </div>
+                        `;
+                        container.appendChild(barRow);
+                    });
+                } else {
+                    container.innerHTML = '<p style="text-align:center; color:#666; padding:20px;">No error data yet. Start by logging your first error!</p>';
+                }
+            } catch (error) {
+                console.error('Error loading client chart:', error);
+                document.getElementById('clientErrorsChart').innerHTML = '<p style="text-align:center; color:#e74c3c; padding:20px;">Failed to load chart. Check console for details.</p>';
+            }
+        }
+
+        async function loadErrorTypesByClient() {
+            try {
+                const response = await fetch(CONFIG.WEBAPP_URL + '?action=getErrorTypesByClient', {
+                    method: 'POST'
+                });
+                const result = await response.json();
+                
+                const container = document.getElementById('errorTypesByClient');
+                
+                if (result.success && Object.keys(result.data).length > 0) {
+                    container.innerHTML = '';
+                    
+                    const colors = {
+                        'Wrong Item': '#e74c3c',
+                        'Wrong Item Picked': '#e74c3c',
+                        'Mislabeled': '#e67e22',
+                        'Mislabeled Shipment': '#e67e22',
+                        'Wrong Qty': '#f39c12',
+                        'Wrong Quantity': '#f39c12',
+                        'Damaged': '#9b59b6',
+                        'Damaged Item Selected': '#9b59b6',
+                        'Damaged During Packing': '#9b59b6',
+                        'Wrong Loc': '#3498db',
+                        'Wrong Location': '#3498db',
+                        'Not Scanned': '#1abc9c',
+                        'Late Repl': '#34495e',
+                        'Late Replenishment': '#34495e',
+                        'Missed Pick': '#95a5a6',
+                        'Missing BOL': '#16a085',
+                        'Wrong Carrier': '#c0392b'
+                    };
+                    
+                    // Sort by total errors
+                    const sortedClients = Object.entries(result.data)
+                        .sort((a, b) => b[1].total - a[1].total)
+                        .slice(0, 10); // Top 10 clients
+                    
+                    sortedClients.forEach(([client, data]) => {
+                        const barRow = document.createElement('div');
+                        barRow.className = 'bar-row';
+                        
+                        let barHTML = '';
+                        Object.entries(data.types).forEach(([type, count]) => {
+                            const width = (count / data.total * 100);
+                            const shortType = type.length > 10 ? type.substring(0, 8) + '..' : type;
+                            barHTML += `<div class="bar-segment" style="width:${width}%; background:${colors[type] || '#95a5a6'};" title="${type}: ${count}">${count > 0 ? shortType : ''}</div>`;
+                        });
+                        
+                        barRow.innerHTML = `
+                            <div class="bar-label">
+                                <span>${client}</span>
+                                <button class="view-details-btn" onclick="showClientModal('${client.replace(/'/g, "\\'")}')">📋 View Details</button>
+                            </div>
+                            <div class="bar-container">
+                                ${barHTML}
+                            </div>
+                        `;
+                        container.appendChild(barRow);
+                    });
+                    
+                    // Create legend
+                    const legend = document.getElementById('errorTypeLegend');
+                    legend.innerHTML = '<strong>Common Error Types:</strong>';
+                    const displayedTypes = new Set();
+                    
+                    sortedClients.forEach(([client, data]) => {
+                        Object.keys(data.types).forEach(type => displayedTypes.add(type));
+                    });
+                    
+                    Array.from(displayedTypes).slice(0, 8).forEach(type => {
+                        const item = document.createElement('div');
+                        item.className = 'legend-item';
+                        item.innerHTML = `
+                            <div class="legend-color" style="background:${colors[type] || '#95a5a6'};"></div>
+                            <span>${type}</span>
+                        `;
+                        legend.appendChild(item);
+                    });
+                } else {
+                    container.innerHTML = '<p style="text-align:center; color:#666; padding:20px;">No error type data yet. Start by logging your first error!</p>';
+                }
+            } catch (error) {
+                console.error('Error loading error types chart:', error);
+                document.getElementById('errorTypesByClient').innerHTML = '<p style="text-align:center; color:#e74c3c; padding:20px;">Failed to load chart. Check console for details.</p>';
+            }
         }
 
         function showClientModal(clientName) {
